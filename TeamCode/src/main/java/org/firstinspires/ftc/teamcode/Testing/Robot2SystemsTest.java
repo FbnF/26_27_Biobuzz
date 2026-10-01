@@ -6,10 +6,16 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
 @TeleOp(name = "SystemsTest", group = "Testing")
 public class Robot2SystemsTest extends LinearOpMode {
+
+    private DcMotorEx leftFront;
+    private DcMotorEx leftBack;
+    private DcMotorEx rightFront;
+    private DcMotorEx rightBack;
 
     private DcMotorEx intakeMotor;
     private DcMotorEx launchMotor;
@@ -56,6 +62,21 @@ public class Robot2SystemsTest extends LinearOpMode {
 
     @Override
     public void runOpMode() {
+        leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
+        leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
+        rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
+        rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
+
+        leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
+        leftBack.setDirection(DcMotorSimple.Direction.REVERSE);
+        rightFront.setDirection(DcMotorSimple.Direction.FORWARD);
+        rightBack.setDirection(DcMotorSimple.Direction.FORWARD);
+
+        leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
         intakeMotor = hardwareMap.get(DcMotorEx.class, "IntakeMotor");
         launchMotor = hardwareMap.get(DcMotorEx.class, "LaunchMotor");
         feedServo = hardwareMap.get(CRServo.class, "feedServo");
@@ -85,6 +106,16 @@ public class Robot2SystemsTest extends LinearOpMode {
 
         try {
             while (opModeIsActive()) {
+
+                double drive = -gamepad1.left_stick_y;
+                double strafe = gamepad1.left_stick_x;
+                double turn = gamepad1.right_stick_x;
+
+                double denominator = Math.max(Math.abs(drive) + Math.abs(strafe) + Math.abs(turn), 1.0);
+                leftFront.setPower((drive + strafe + turn) / denominator);
+                leftBack.setPower((drive - strafe + turn) / denominator);
+                rightFront.setPower((drive - strafe - turn) / denominator);
+                rightBack.setPower((drive + strafe - turn) / denominator);
 
                 if (gamepad1.a && !previousA) {
                     intakeOn = !intakeOn;
@@ -146,6 +177,10 @@ public class Robot2SystemsTest extends LinearOpMode {
                 telemetry.update();
             }
         } finally {
+            leftFront.setPower(0);
+            leftBack.setPower(0);
+            rightFront.setPower(0);
+            rightBack.setPower(0);
             intakeMotor.setPower(0);
             launchMotor.setVelocity(0);
             launchMotor.setPower(0);
