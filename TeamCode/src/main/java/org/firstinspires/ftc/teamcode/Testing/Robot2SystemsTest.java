@@ -60,44 +60,72 @@ public class Robot2SystemsTest extends LinearOpMode {
     private boolean previousY = false;
     private boolean previousLeftBumper = false;
 
+    private DcMotorEx getMotorWithFallback(String... names) {
+        for (String name : names) {
+            try {
+                DcMotorEx m = hardwareMap.get(DcMotorEx.class, name);
+                if (m != null) return m;
+            } catch (Exception ignored) {}
+        }
+        return null;
+    }
+
     @Override
     public void runOpMode() {
-        leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
-        leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
-        rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
-        rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
+        leftFront = getMotorWithFallback("leftFront", "lf", "left_front");
+        leftBack = getMotorWithFallback("leftBack", "leftRear", "lr", "left_back");
+        rightFront = getMotorWithFallback("rightFront", "rf", "right_front");
+        rightBack = getMotorWithFallback("rightBack", "rightRear", "rr", "right_back");
 
-        leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
-        leftBack.setDirection(DcMotorSimple.Direction.REVERSE);
-        rightFront.setDirection(DcMotorSimple.Direction.FORWARD);
-        rightBack.setDirection(DcMotorSimple.Direction.FORWARD);
+        if (leftFront != null) {
+            leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
+            leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            leftFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        }
+        if (leftBack != null) {
+            leftBack.setDirection(DcMotorSimple.Direction.REVERSE);
+            leftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            leftBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        }
+        if (rightFront != null) {
+            rightFront.setDirection(DcMotorSimple.Direction.FORWARD);
+            rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            rightFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        }
+        if (rightBack != null) {
+            rightBack.setDirection(DcMotorSimple.Direction.FORWARD);
+            rightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            rightBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        }
 
-        leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        leftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-        intakeMotor = hardwareMap.get(DcMotorEx.class, "IntakeMotor");
-        launchMotor = hardwareMap.get(DcMotorEx.class, "LaunchMotor");
-        feedServo = hardwareMap.get(CRServo.class, "feedServo");
-        sideServo = hardwareMap.get(CRServo.class, "sideServo");
+        try { intakeMotor = hardwareMap.get(DcMotorEx.class, "IntakeMotor"); } catch (Exception ignored) {}
+        try { launchMotor = hardwareMap.get(DcMotorEx.class, "LaunchMotor"); } catch (Exception ignored) {}
+        try { feedServo = hardwareMap.get(CRServo.class, "feedServo"); } catch (Exception ignored) {}
+        try { sideServo = hardwareMap.get(CRServo.class, "sideServo"); } catch (Exception ignored) {}
 
         for (LynxModule hub : hardwareMap.getAll(LynxModule.class)) {
             hub.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
         }
 
-        intakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        launchMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        launchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        launchMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(FLYWHEEL_P, FLYWHEEL_I, FLYWHEEL_D, FLYWHEEL_F));
-
-        intakeMotor.setPower(0);
-        launchMotor.setPower(0);
-        feedServo.setPower(0);
-        sideServo.setPower(0);
+        if (intakeMotor != null) {
+            intakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            intakeMotor.setPower(0);
+        }
+        if (launchMotor != null) {
+            launchMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            launchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            launchMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(FLYWHEEL_P, FLYWHEEL_I, FLYWHEEL_D, FLYWHEEL_F));
+            launchMotor.setPower(0);
+        }
+        if (feedServo != null) feedServo.setPower(0);
+        if (sideServo != null) sideServo.setPower(0);
 
         telemetry.addLine("Systems Test Ready");
+        telemetry.addData("Drive LF", leftFront != null ? "OK" : "MISSING");
+        telemetry.addData("Drive LB", leftBack != null ? "OK" : "MISSING");
+        telemetry.addData("Drive RF", rightFront != null ? "OK" : "MISSING");
+        telemetry.addData("Drive RB", rightBack != null ? "OK" : "MISSING");
         telemetry.update();
 
         waitForStart();
@@ -112,24 +140,29 @@ public class Robot2SystemsTest extends LinearOpMode {
                 double turn = gamepad1.right_stick_x;
 
                 double denominator = Math.max(Math.abs(drive) + Math.abs(strafe) + Math.abs(turn), 1.0);
-                leftFront.setPower((drive + strafe + turn) / denominator);
-                leftBack.setPower((drive - strafe + turn) / denominator);
-                rightFront.setPower((drive - strafe - turn) / denominator);
-                rightBack.setPower((drive + strafe - turn) / denominator);
+                double lfPower = (drive + strafe + turn) / denominator;
+                double lbPower = (drive - strafe + turn) / denominator;
+                double rfPower = (drive - strafe - turn) / denominator;
+                double rbPower = (drive + strafe - turn) / denominator;
+
+                if (leftFront != null) leftFront.setPower(lfPower);
+                if (leftBack != null) leftBack.setPower(lbPower);
+                if (rightFront != null) rightFront.setPower(rfPower);
+                if (rightBack != null) rightBack.setPower(rbPower);
 
                 if (gamepad1.a && !previousA) {
                     intakeOn = !intakeOn;
-                    intakeMotor.setPower(intakeOn ? INTAKE_POWER : 0);
+                    if (intakeMotor != null) intakeMotor.setPower(intakeOn ? INTAKE_POWER : 0);
                 }
 
                 if (gamepad1.b && !previousB) {
                     sideOn = !sideOn;
-                    sideServo.setPower(sideOn ? SIDE_POWER : 0);
+                    if (sideServo != null) sideServo.setPower(sideOn ? SIDE_POWER : 0);
                 }
 
                 if (gamepad1.x && !previousX) {
                     feedOn = !feedOn;
-                    feedServo.setPower(feedOn ? FEED_POWER : 0);
+                    if (feedServo != null) feedServo.setPower(feedOn ? FEED_POWER : 0);
                 }
 
                 if (gamepad1.y && !previousY) {
@@ -137,9 +170,9 @@ public class Robot2SystemsTest extends LinearOpMode {
                     sideOn = true;
                     feedOn = true;
 
-                    intakeMotor.setPower(INTAKE_POWER);
-                    sideServo.setPower(SIDE_POWER);
-                    feedServo.setPower(FEED_POWER);
+                    if (intakeMotor != null) intakeMotor.setPower(INTAKE_POWER);
+                    if (sideServo != null) sideServo.setPower(SIDE_POWER);
+                    if (feedServo != null) feedServo.setPower(FEED_POWER);
                 }
 
                 if (gamepad1.left_bumper && !previousLeftBumper) {
@@ -147,12 +180,12 @@ public class Robot2SystemsTest extends LinearOpMode {
                     sideOn = false;
                     feedOn = false;
 
-                    intakeMotor.setPower(0);
-                    sideServo.setPower(0);
-                    feedServo.setPower(0);
+                    if (intakeMotor != null) intakeMotor.setPower(0);
+                    if (sideServo != null) sideServo.setPower(0);
+                    if (feedServo != null) feedServo.setPower(0);
 
                     targetFlywheelVelocity = 0;
-                    launchMotor.setVelocity(0);
+                    if (launchMotor != null) launchMotor.setVelocity(0);
                 }
 
                 if (gamepad1.dpad_up) targetFlywheelVelocity = FLYWHEEL_720;
@@ -160,7 +193,7 @@ public class Robot2SystemsTest extends LinearOpMode {
                 if (gamepad1.dpad_down) targetFlywheelVelocity = FLYWHEEL_LONG;
                 if (gamepad1.dpad_left) targetFlywheelVelocity = 0;
 
-                launchMotor.setVelocity(targetFlywheelVelocity);
+                if (launchMotor != null) launchMotor.setVelocity(targetFlywheelVelocity);
 
                 previousA = gamepad1.a;
                 previousB = gamepad1.b;
@@ -168,24 +201,30 @@ public class Robot2SystemsTest extends LinearOpMode {
                 previousY = gamepad1.y;
                 previousLeftBumper = gamepad1.left_bumper;
 
-                telemetry.addLine("Systems Test");
+                telemetry.addLine("---- Systems Test ----");
+                telemetry.addData("GP1 Joysticks", "LY:%.2f LX:%.2f RX:%.2f", drive, strafe, turn);
+                telemetry.addData("Drive Init", "LF:%s LB:%s RF:%s RB:%s",
+                        leftFront != null ? "OK" : "MISSING",
+                        leftBack != null ? "OK" : "MISSING",
+                        rightFront != null ? "OK" : "MISSING",
+                        rightBack != null ? "OK" : "MISSING");
+                telemetry.addData("Drive Powers", "LF:%.2f LB:%.2f RF:%.2f RB:%.2f", lfPower, lbPower, rfPower, rbPower);
                 telemetry.addData("Intake", intakeOn ? "ON" : "OFF");
                 telemetry.addData("Transfer", sideOn ? "ON" : "OFF");
                 telemetry.addData("Feed", feedOn ? "ON" : "OFF");
                 telemetry.addData("Flywheel Target TPS", "%.0f", targetFlywheelVelocity);
-                telemetry.addData("Flywheel Actual TPS", "%.0f", launchMotor.getVelocity());
+                telemetry.addData("Flywheel Actual TPS", "%.0f", launchMotor != null ? launchMotor.getVelocity() : 0);
                 telemetry.update();
             }
         } finally {
-            leftFront.setPower(0);
-            leftBack.setPower(0);
-            rightFront.setPower(0);
-            rightBack.setPower(0);
-            intakeMotor.setPower(0);
-            launchMotor.setVelocity(0);
-            launchMotor.setPower(0);
-            feedServo.setPower(0);
-            sideServo.setPower(0);
+            if (leftFront != null) leftFront.setPower(0);
+            if (leftBack != null) leftBack.setPower(0);
+            if (rightFront != null) rightFront.setPower(0);
+            if (rightBack != null) rightBack.setPower(0);
+            if (intakeMotor != null) intakeMotor.setPower(0);
+            if (launchMotor != null) { launchMotor.setVelocity(0); launchMotor.setPower(0); }
+            if (feedServo != null) feedServo.setPower(0);
+            if (sideServo != null) sideServo.setPower(0);
         }
     }
 }
