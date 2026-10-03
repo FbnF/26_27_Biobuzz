@@ -28,10 +28,12 @@ public class Robot2SystemsTest extends LinearOpMode {
     // X = Feed/Cam-Jet ON/OFF
     // Y = Everything On
     // LB = Everything Off
-    // D-Pad Up = 720 TPS
-    // D-Pad Right = 1175 TPS
-    // D-Pad Down = 1550 TPS
-    // D-Pad Left = Flywheel OFF
+    // RB = +5 TPS
+    // RT = +10 TPS
+    // LT = -10 TPS
+    // D-Pad Up = +50 TPS
+    // D-Pad Down = -50 TPS
+    // D-Pad Left = Reset Flywheel to 1175 TPS
 
     // Flywheel PIDF from the previous robot
     private static final double FLYWHEEL_P = 500;
@@ -39,10 +41,8 @@ public class Robot2SystemsTest extends LinearOpMode {
     private static final double FLYWHEEL_D = 0;
     private static final double FLYWHEEL_F = 4;
 
-    // Previous flywheel speeds
-    private static final double FLYWHEEL_720 = 720.0;
-    private static final double FLYWHEEL_SHORT = 1175.0;
-    private static final double FLYWHEEL_LONG = 1550.0;
+    // Flywheel speed settings
+    private static final double STARTING_FLYWHEEL_TPS = 1175.0;
 
     private static final double INTAKE_POWER = 0.90;
     private static final double SIDE_POWER = 1.0;
@@ -52,13 +52,20 @@ public class Robot2SystemsTest extends LinearOpMode {
     private boolean sideOn = false;
     private boolean feedOn = false;
 
-    private double targetFlywheelVelocity = 0;
+    private double targetFlywheelVelocity = STARTING_FLYWHEEL_TPS;
 
     private boolean previousA = false;
     private boolean previousB = false;
     private boolean previousX = false;
     private boolean previousY = false;
     private boolean previousLeftBumper = false;
+    private boolean previousRightBumper = false;
+    private boolean previousDpadUp = false;
+    private boolean previousDpadDown = false;
+    private boolean previousDpadLeft = false;
+
+    private double previousRightTrigger = 0;
+    private double previousLeftTrigger = 0;
 
     private DcMotorEx getMotorWithFallback(String... names) {
         for (String name : names) {
@@ -82,26 +89,40 @@ public class Robot2SystemsTest extends LinearOpMode {
             leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             leftFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         }
+
         if (leftBack != null) {
             leftBack.setDirection(DcMotorSimple.Direction.REVERSE);
             leftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             leftBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         }
+
         if (rightFront != null) {
             rightFront.setDirection(DcMotorSimple.Direction.FORWARD);
             rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             rightFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         }
+
         if (rightBack != null) {
             rightBack.setDirection(DcMotorSimple.Direction.FORWARD);
             rightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             rightBack.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         }
 
-        try { intakeMotor = hardwareMap.get(DcMotorEx.class, "IntakeMotor"); } catch (Exception ignored) {}
-        try { launchMotor = hardwareMap.get(DcMotorEx.class, "LaunchMotor"); } catch (Exception ignored) {}
-        try { feedServo = hardwareMap.get(CRServo.class, "feedServo"); } catch (Exception ignored) {}
-        try { sideServo = hardwareMap.get(CRServo.class, "sideServo"); } catch (Exception ignored) {}
+        try {
+            intakeMotor = hardwareMap.get(DcMotorEx.class, "IntakeMotor");
+        } catch (Exception ignored) {}
+
+        try {
+            launchMotor = hardwareMap.get(DcMotorEx.class, "LaunchMotor");
+        } catch (Exception ignored) {}
+
+        try {
+            feedServo = hardwareMap.get(CRServo.class, "feedServo");
+        } catch (Exception ignored) {}
+
+        try {
+            sideServo = hardwareMap.get(CRServo.class, "sideServo");
+        } catch (Exception ignored) {}
 
         for (LynxModule hub : hardwareMap.getAll(LynxModule.class)) {
             hub.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
@@ -112,12 +133,15 @@ public class Robot2SystemsTest extends LinearOpMode {
             intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             intakeMotor.setPower(0);
         }
+
         if (launchMotor != null) {
             launchMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             launchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            launchMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(FLYWHEEL_P, FLYWHEEL_I, FLYWHEEL_D, FLYWHEEL_F));
+            launchMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER,
+                    new PIDFCoefficients(FLYWHEEL_P, FLYWHEEL_I, FLYWHEEL_D, FLYWHEEL_F));
             launchMotor.setPower(0);
         }
+
         if (feedServo != null) feedServo.setPower(0);
         if (sideServo != null) sideServo.setPower(0);
 
@@ -185,13 +209,35 @@ public class Robot2SystemsTest extends LinearOpMode {
                     if (feedServo != null) feedServo.setPower(0);
 
                     targetFlywheelVelocity = 0;
+
                     if (launchMotor != null) launchMotor.setVelocity(0);
                 }
 
-                if (gamepad1.dpad_up) targetFlywheelVelocity = FLYWHEEL_720;
-                if (gamepad1.dpad_right) targetFlywheelVelocity = FLYWHEEL_SHORT;
-                if (gamepad1.dpad_down) targetFlywheelVelocity = FLYWHEEL_LONG;
-                if (gamepad1.dpad_left) targetFlywheelVelocity = 0;
+                if (gamepad1.right_bumper && !previousRightBumper) {
+                    targetFlywheelVelocity += 5;
+                }
+
+                if (gamepad1.right_trigger > 0.5 && previousRightTrigger <= 0.5) {
+                    targetFlywheelVelocity += 10;
+                }
+
+                if (gamepad1.left_trigger > 0.5 && previousLeftTrigger <= 0.5) {
+                    targetFlywheelVelocity -= 10;
+                }
+
+                if (gamepad1.dpad_up && !previousDpadUp) {
+                    targetFlywheelVelocity += 50;
+                }
+
+                if (gamepad1.dpad_down && !previousDpadDown) {
+                    targetFlywheelVelocity -= 50;
+                }
+
+                if (gamepad1.dpad_left && !previousDpadLeft) {
+                    targetFlywheelVelocity = STARTING_FLYWHEEL_TPS;
+                }
+
+                targetFlywheelVelocity = Math.max(0, targetFlywheelVelocity);
 
                 if (launchMotor != null) launchMotor.setVelocity(targetFlywheelVelocity);
 
@@ -200,6 +246,12 @@ public class Robot2SystemsTest extends LinearOpMode {
                 previousX = gamepad1.x;
                 previousY = gamepad1.y;
                 previousLeftBumper = gamepad1.left_bumper;
+                previousRightBumper = gamepad1.right_bumper;
+                previousRightTrigger = gamepad1.right_trigger;
+                previousLeftTrigger = gamepad1.left_trigger;
+                previousDpadUp = gamepad1.dpad_up;
+                previousDpadDown = gamepad1.dpad_down;
+                previousDpadLeft = gamepad1.dpad_left;
 
                 telemetry.addLine("---- Systems Test ----");
                 telemetry.addData("GP1 Joysticks", "LY:%.2f LX:%.2f RX:%.2f", drive, strafe, turn);
@@ -208,12 +260,14 @@ public class Robot2SystemsTest extends LinearOpMode {
                         leftBack != null ? "OK" : "MISSING",
                         rightFront != null ? "OK" : "MISSING",
                         rightBack != null ? "OK" : "MISSING");
-                telemetry.addData("Drive Powers", "LF:%.2f LB:%.2f RF:%.2f RB:%.2f", lfPower, lbPower, rfPower, rbPower);
+                telemetry.addData("Drive Powers", "LF:%.2f LB:%.2f RF:%.2f RB:%.2f",
+                        lfPower, lbPower, rfPower, rbPower);
                 telemetry.addData("Intake", intakeOn ? "ON" : "OFF");
                 telemetry.addData("Transfer", sideOn ? "ON" : "OFF");
                 telemetry.addData("Feed", feedOn ? "ON" : "OFF");
                 telemetry.addData("Flywheel Target TPS", "%.0f", targetFlywheelVelocity);
-                telemetry.addData("Flywheel Actual TPS", "%.0f", launchMotor != null ? launchMotor.getVelocity() : 0);
+                telemetry.addData("Flywheel Actual TPS", "%.0f",
+                        launchMotor != null ? launchMotor.getVelocity() : 0);
                 telemetry.update();
             }
         } finally {
@@ -222,7 +276,12 @@ public class Robot2SystemsTest extends LinearOpMode {
             if (rightFront != null) rightFront.setPower(0);
             if (rightBack != null) rightBack.setPower(0);
             if (intakeMotor != null) intakeMotor.setPower(0);
-            if (launchMotor != null) { launchMotor.setVelocity(0); launchMotor.setPower(0); }
+
+            if (launchMotor != null) {
+                launchMotor.setVelocity(0);
+                launchMotor.setPower(0);
+            }
+
             if (feedServo != null) feedServo.setPower(0);
             if (sideServo != null) sideServo.setPower(0);
         }
