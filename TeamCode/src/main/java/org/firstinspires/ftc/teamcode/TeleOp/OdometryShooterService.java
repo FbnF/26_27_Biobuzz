@@ -9,22 +9,22 @@ public class OdometryShooterService {
 
     private static OdometryShooterService instance = null;
 
-    // Target hive coordinates
+    // Target hive coordinates(assumption)
     public static double BLUE_HIVE_X = 141.5;
     public static double BLUE_HIVE_Y = 141.5;
     public static double RED_HIVE_X = 0.0;
     public static double RED_HIVE_Y = 141.5;
 
-    // Hive opening directions in radians
+    // Hive opening directions in radians(assumption)
     public static double BLUE_HIVE_FACE_RAD = Math.toRadians(225.0);
     public static double RED_HIVE_FACE_RAD = Math.toRadians(315.0);
 
-    // Shooting cone and distance cutoffs
+    // Shooting cone and distance cutoffs(assumption)
     public static double MAX_SECTOR_HALF_ANGLE_DEG = 45.0;
     public static double MIN_SHOOT_DIST_IN = 20.0;
     public static double MAX_SHOOT_DIST_IN = 120.0;
 
-    // Near and far calibration endpoints
+    // Near and far calibration endpoints(assumption)
     public static double CALIB_NEAR_DIST_IN = 30.0;
     public static double CALIB_NEAR_TPS = 1200.0;
     public static double CALIB_FAR_DIST_IN = 100.0;
@@ -79,14 +79,7 @@ public class OdometryShooterService {
         double targetHeading = Calculations.angleToTarget(robotPose, hiveX, hiveY);
         double headingErr = Calculations.headingError(robotPose, hiveX, hiveY);
 
-        boolean validSector = Calculations.isInTriangularSector(
-                robotPose,
-                hiveX,
-                hiveY,
-                faceAngleRad,
-                Math.toRadians(MAX_SECTOR_HALF_ANGLE_DEG),
-                MIN_SHOOT_DIST_IN,
-                MAX_SHOOT_DIST_IN
+        boolean validSector = Calculations.isInTriangularSector(robotPose, hiveX, hiveY, faceAngleRad, Math.toRadians(MAX_SECTOR_HALF_ANGLE_DEG), MIN_SHOOT_DIST_IN, MAX_SHOOT_DIST_IN
         );
 
         if (!validSector) {

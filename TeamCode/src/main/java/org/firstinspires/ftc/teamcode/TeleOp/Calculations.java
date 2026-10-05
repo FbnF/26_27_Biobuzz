@@ -36,13 +36,7 @@ public final class Calculations {
     }
 
     // Checks if robot is inside the valid shooting cone
-    public static boolean isInTriangularSector(Pose robotPose,
-                                               double hiveX,
-                                               double hiveY,
-                                               double hiveFaceAngleRad,
-                                               double maxSectorHalfAngleRad,
-                                               double minDistIn,
-                                               double maxDistIn) {
+    public static boolean isInTriangularSector(Pose robotPose, double hiveX, double hiveY, double hiveFaceAngleRad, double maxSectorHalfAngleRad, double minDistIn, double maxDistIn) {
         if (robotPose == null) return false;
 
         double dist = distance(robotPose, hiveX, hiveY);
