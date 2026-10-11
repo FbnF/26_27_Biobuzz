@@ -25,7 +25,7 @@ public class TestTeleop extends OpMode {
 
     private  boolean isSpinning = false;
 
-    private CRServo spindexServo;
+    private Servo spindexServo;
 
 
     @Override
@@ -34,10 +34,12 @@ public class TestTeleop extends OpMode {
         launchMotor = hardwareMap.get(DcMotorEx.class, "launchMotor");
         intakeMotor = hardwareMap.get(DcMotor.class, "intakeMotor");
         turretServo = hardwareMap.get(Servo.class, "turretServo");
-        spindexServo = hardwareMap.get(CRServo.class, "spindexerServo");
+        spindexServo = hardwareMap.get(Servo.class, "spindexerServo");
         intakeMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         launchMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         turretServo.setPosition(0.0);
+
+
     }
 
     @Override
@@ -71,13 +73,13 @@ public class TestTeleop extends OpMode {
             turretServoAngle += 0.05;
         }
         if(gamepad1.yWasPressed()){
-            isSpinning = !isSpinning;
-            if(isSpinning){
-                spindexServo.setPower(1);
-            } else{
-                spindexServo.setPower(0);
-            }
+            double current = spindexServo.getPosition();
+            spindexServo.setPosition(current + 0.0507);
         }
+        if(gamepad1.dpadDownWasPressed()){
+            spindexServo.setPosition(0.0);
+        }
+
         turretServo.setPosition(turretServoAngle);
 
 
