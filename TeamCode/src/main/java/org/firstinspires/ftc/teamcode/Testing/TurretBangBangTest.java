@@ -8,12 +8,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import org.firstinspires.ftc.teamcode.Config.TurretConfig;
 import org.firstinspires.ftc.teamcode.Services.TurretService;
 
-// Controls:
-// LT / RT      = nudge target angle down / up by STEP
-// D-Pad Up/Down = increase / decrease STEP
-// A / Y        = target min / max angle
-// X            = stop turret
-// Tune POWER, DEADBAND, HYSTERESIS, TICKS_PER_RADIAN live via FTC Dashboard.
+
 @TeleOp(name = "TurretBangBangTest", group = "Testing")
 public class TurretBangBangTest extends LinearOpMode {
 
