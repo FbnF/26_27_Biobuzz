@@ -30,6 +30,8 @@ import org.openftc.easyopencv.OpenCvPipeline;
 import org.openftc.easyopencv.OpenCvWebcam;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
+import org.firstinspires.ftc.teamcode.Services.VisionService;
+import org.firstinspires.ftc.teamcode.Config.VisionConfig;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -207,16 +209,12 @@ public class TestAutonomous extends OpMode {
     @Override
     public void loop() {
         //TODO Change this to work with april tags
-        LLResult result = limeLight.getLatestResult();
-        if (result != null) {
-            List<LLResultTypes.ColorResult> colorBlobs = result.getColorResults();
-            for (LLResultTypes.ColorResult blob : colorBlobs) {
-                double tx = blob.getTargetXDegrees();
-                double ty = blob.getTargetYDegrees();
-                double ta = blob.getTargetArea();
-                telemetry.addData("Blob Target", "X: %.2f, Y: %.2f, Area: %.2f", tx, ty, ta);
+            LLResult ll = null;
+            LLResult tmp = limeLight.getLatestResult();
+            if (tmp != null && tmp.isValid() && tmp.getStaleness() < 100) {
+                ll = tmp;
             }
-        }
+
 
 
         boolean ballDetected = numContoursFound > 0 ;
