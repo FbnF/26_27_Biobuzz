@@ -30,13 +30,13 @@ public class TestTeleop extends OpMode {
     @Override
     public void init() {
         follower = Constants.create(hardwareMap);
-        launchMotor = hardwareMap.get(DcMotorEx.class, "launchMotor");
+      /*  launchMotor = hardwareMap.get(DcMotorEx.class, "launchMotor");
         intakeMotor = hardwareMap.get(DcMotor.class, "intakeMotor");
         turretServo = hardwareMap.get(Servo.class, "turretServo");
         spindexServo = hardwareMap.get(Servo.class, "spindexerServo");
         intakeMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         launchMotor.setDirection(DcMotorSimple.Direction.REVERSE);
-        turretServo.setPosition(0.0);
+        turretServo.setPosition(0.0);*/
 
 
     }
@@ -50,7 +50,7 @@ public class TestTeleop extends OpMode {
                 gamepad1.right_stick_x
         );
 
-        if(gamepad1.leftTriggerWasPressed()){
+      /*  if(gamepad1.leftTriggerWasPressed()){
             turretSpeed += 50;
         }
         if(gamepad1.rightTriggerWasPressed()){
@@ -81,7 +81,7 @@ public class TestTeleop extends OpMode {
 
         turretServo.setPosition(turretServoAngle);
 
-
+*/
         telemetry.addData("Turret Velocity", turretSpeed);
         telemetry.update();
         follower.update();

@@ -37,7 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Autonomous
-public class TestAutonomous extends OpMode {
+public class  TestAutonomous extends OpMode {
     private Follower follower;
     private int state = 0;
     // State 0 is park, State 1 is avoid, State 2 is chase, State 3 is shooter position 1, State 4 is shooter position 2, State 5 is shooter position 3
