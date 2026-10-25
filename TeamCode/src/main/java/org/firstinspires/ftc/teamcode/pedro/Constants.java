@@ -17,8 +17,8 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 public class Constants {
     public static MecanumConfig drivetrainConfig = new MecanumConfig(
             c -> {
-                c.frontLeftName.set("LeftFront");
-                c.backLeftName.set("LeftBack");
+                c.frontLeftName.set("leftFront");
+                c.backLeftName.set("leftBack");
                 c.frontRightName.set("rightFront");
                 c.backRightName.set("rightBack");
 
