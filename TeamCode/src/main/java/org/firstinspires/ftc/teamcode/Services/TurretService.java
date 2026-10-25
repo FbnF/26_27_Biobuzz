@@ -11,6 +11,9 @@ import org.opencv.core.Mat;
 // Status light logic
 public class TurretService {
 
+    //Desmos calcin
+    //https://www.desmos.com/calculator/zo74h63iup
+
     private static TurretService instance = null;
 
     private DcMotorEx turretMotor = null;
@@ -95,10 +98,11 @@ public class TurretService {
 
 
     public double GetRotationAngle(double targetX, double targetY){
-        if(targetX == 0.0 && targetY == 0.0){
+        double itargetX = -targetX;
+        if(itargetX == 0.0 && targetY == 0.0){
             return TurretConfig.min;
         }
-        double angleOfHive = Math.atan2(targetX, targetY);
+        double angleOfHive = Math.atan2(itargetX, targetY);
         if(angleOfHive < TurretConfig.min){
             return TurretConfig.min;
         }

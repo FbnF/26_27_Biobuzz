@@ -1,23 +1,25 @@
 package org.firstinspires.ftc.teamcode.Autonomous;
 
-import com.qualcomm.hardware.limelightvision.Limelight3A;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.pedropathing.follower.Follower;
-
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.teamcode.pedro.Constants;
-import com.pedropathing.api.PoseFactory;
-import com.pedropathing.math.Pose;
-import static com.pedropathing.api.Paths.*;
-import com.pedropathing.paths.Path;
-import com.pedropathing.ivy.Scheduler;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-
+import static com.pedropathing.api.Paths.curve;
+import static com.pedropathing.api.Paths.line;
 import static com.pedropathing.ivy.Scheduler.schedule;
 import static com.pedropathing.ivy.pedro.PedroCommands.follow;
 
+import com.pedropathing.api.PoseFactory;
+import com.pedropathing.follower.Follower;
+import com.pedropathing.ivy.Scheduler;
+import com.pedropathing.math.Pose;
+import com.pedropathing.paths.Path;
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.Services.TurretService;
+import org.firstinspires.ftc.teamcode.pedro.Constants;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
@@ -28,14 +30,12 @@ import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvPipeline;
 import org.openftc.easyopencv.OpenCvWebcam;
-import com.qualcomm.hardware.limelightvision.LLResult;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Autonomous(name = "StateMachineAuto")
-public class StateMachineAuto extends OpMode {
+public class BlueStateMachineAuto extends OpMode {
     private Follower follower;
     private int state = 0;
     private int previousState = -1; // Prevents re-scheduling paths 50x a second
@@ -43,6 +43,13 @@ public class StateMachineAuto extends OpMode {
 
     private OpenCvWebcam openCvCam;
     private Limelight3A limeLight;
+
+    private DcMotorEx leftFront;
+    private DcMotorEx leftBack;
+    private DcMotorEx rightFront;
+    private DcMotorEx rightBack;
+
+
 
     private TurretService turretService;
     private DcMotorEx launchMotor;
@@ -229,6 +236,10 @@ public class StateMachineAuto extends OpMode {
         follower = Constants.create(hardwareMap);
         follower.setPose(startPose);
         launchMotor = hardwareMap.get(DcMotorEx.class, "launchMotor");
+        leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
+        leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
+        rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
+        rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
 
         limeLight = hardwareMap.get(Limelight3A.class, "limelight");
         limeLight.setPollRateHz(100);
@@ -274,10 +285,10 @@ public class StateMachineAuto extends OpMode {
         boolean anyBallDetected = pollenDetected || redDetected || blueDetected;
 
         // Example logic: Chase Pollen or Red, Avoid Blue
-        if (pollenDetected || redDetected) {
+        if (pollenDetected || blueDetected) {
             state = 2; // Chase
             isJustPickedUp = true;
-        } else if (blueDetected) {
+        } else if (redDetected) {
             state = 1; // Avoid
         } else if (!anyBallDetected && isJustPickedUp) {
             state = 3; // Shoot1
@@ -289,6 +300,10 @@ public class StateMachineAuto extends OpMode {
         telemetry.addData("Red Area", "%.1f (Detected: %b)", maxRedContourArea, redDetected);
         telemetry.addData("Blue Area", "%.1f (Detected: %b)", maxBlueContourArea, blueDetected);
 
+
+        if(autoTimer.seconds() < 5){
+            state = 0;
+        }
         // Only schedule the path once when entering a new state
         if (state != previousState) {
             switch (state) {
@@ -299,7 +314,10 @@ public class StateMachineAuto extends OpMode {
                     schedule(follow(follower, circle()));
                     break;
                 case 2:
-                    // Add chase command here when ready
+                    leftFront.setVelocity(1000);
+                    leftBack.setVelocity(1000);
+                    rightBack.setVelocity(1000);
+                    rightFront.setVelocity(1000);
                     break;
                 case 3:
                     schedule(follow(follower, shoot1()));
@@ -314,9 +332,7 @@ public class StateMachineAuto extends OpMode {
             previousState = state;
         }
 
-        if(autoTimer.seconds() < 2){
-            state = 0;
-        }
+
 
         telemetry.addData("Current State", state);
         Scheduler.execute();
