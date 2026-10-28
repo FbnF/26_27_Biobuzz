@@ -34,7 +34,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Autonomous(name = "StateMachineAuto")
+@Autonomous(name = "RedStateMachineAuto")
 public class RedStateMachineAuto extends OpMode {
     private Follower follower;
     private int state = 0;

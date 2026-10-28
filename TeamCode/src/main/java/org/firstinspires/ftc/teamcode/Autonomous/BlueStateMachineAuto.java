@@ -34,7 +34,7 @@ import org.openftc.easyopencv.OpenCvWebcam;
 import java.util.ArrayList;
 import java.util.List;
 
-@Autonomous(name = "StateMachineAuto")
+@Autonomous(name = "BlueStateMachineAuto")
 public class BlueStateMachineAuto extends OpMode {
     private Follower follower;
     private int state = 0;
