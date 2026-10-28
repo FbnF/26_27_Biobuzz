@@ -55,7 +55,7 @@ public class RedStateMachineAuto extends OpMode {
 
     private boolean isJustPickedUp = false;
 
-
+    private double border = 50;
     private ElapsedTime autoTimer = new ElapsedTime();
     private final PoseFactory p = PoseFactory.degrees();
     private final Pose startPose = p.of(24, 24, 0);
@@ -234,7 +234,7 @@ public class RedStateMachineAuto extends OpMode {
         Scheduler.reset();
         follower = Constants.create(hardwareMap);
         follower.setPose(startPose);
-        launchMotor = hardwareMap.get(DcMotorEx.class, "launchMotor");
+     //   launchMotor = hardwareMap.get(DcMotorEx.class, "launchMotor");
         leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
         leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
         rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
@@ -306,32 +306,53 @@ public class RedStateMachineAuto extends OpMode {
         if (state != previousState) {
             switch (state) {
                 case 0:
+                    leftFront.setVelocity(0);
+                    leftBack.setVelocity(0);
+                    rightBack.setVelocity(0);
+                    rightFront.setVelocity(0);
                     schedule(follow(follower, park()));
                     break;
                 case 1:
                     schedule(follow(follower, circle()));
+                    leftFront.setVelocity(0);
+                    leftBack.setVelocity(0);
+                    rightBack.setVelocity(0);
+                    rightFront.setVelocity(0);
                     break;
                 case 2:
-                    leftFront.setVelocity(1000);
-                    leftBack.setVelocity(1000);
-                    rightBack.setVelocity(1000);
-                    rightFront.setVelocity(1000);
+
+                    leftFront.setVelocity(500);
+                    leftBack.setVelocity(500);
+                    rightBack.setVelocity(500);
+                    rightFront.setVelocity(500);
                     break;
                 case 3:
                     schedule(follow(follower, shoot1()));
+                    leftFront.setVelocity(0);
+                    leftBack.setVelocity(0);
+                    rightBack.setVelocity(0);
+                    rightFront.setVelocity(0);
                     break;
                 case 4:
                     schedule(follow(follower, shoot2()));
+                    leftFront.setVelocity(0);
+                    leftBack.setVelocity(0);
+                    rightBack.setVelocity(0);
+                    rightFront.setVelocity(0);
                     break;
                 case 5:
                     schedule(follow(follower, shoot3()));
+                    leftFront.setVelocity(0);
+                    leftBack.setVelocity(0);
+                    rightBack.setVelocity(0);
+                    rightFront.setVelocity(0);
                     break;
             }
             previousState = state;
         }
 
-
-
+        follower.update();
+        telemetry.addData("Current Pose", currentPose);
         telemetry.addData("Current State", state);
         Scheduler.execute();
         telemetry.update();
