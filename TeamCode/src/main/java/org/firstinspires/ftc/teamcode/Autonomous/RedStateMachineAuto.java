@@ -60,7 +60,7 @@ public class RedStateMachineAuto extends OpMode {
     private final PoseFactory p = PoseFactory.degrees();
     private final Pose startPose = p.of(24, 24, 0);
     private final Pose park = p.of(0, 0, 90);
-    private final Pose currentPose = startPose;
+    private Pose currentPose = startPose;
     private final Pose controlPose = p.of(12, 12, 45);
     private final Pose shootPose = p.of(57.18932038834951, 23.653721682847912, 90);
     private final Pose shootPose2 = p.of(57.01213592233011, 117.73063309061487, 270);
@@ -276,6 +276,7 @@ public class RedStateMachineAuto extends OpMode {
             telemetry.addData("LimeLight Ty", "%.2f", result.getTy());
             telemetry.addData("LimeLight Ta", "%.2f", result.getTa());
         }
+        currentPose = follower.pose();
 
         boolean pollenDetected = maxPollenContourArea > 100;
         boolean redDetected = maxRedContourArea > 100;
