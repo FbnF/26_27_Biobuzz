@@ -55,6 +55,8 @@ public class RedStateMachineAuto extends OpMode {
 
     private boolean isJustPickedUp = false;
 
+    private boolean isCharging = false;
+
     private double border = 50;
     private ElapsedTime autoTimer = new ElapsedTime();
     private final PoseFactory p = PoseFactory.degrees();
@@ -292,6 +294,8 @@ public class RedStateMachineAuto extends OpMode {
         } else if (!anyBallDetected && isJustPickedUp) {
             state = 3; // Shoot1
             isJustPickedUp = false;
+        } else{
+            state = 1;
         }
 
         telemetry.addData("Contours Found", numContoursFound);
@@ -307,6 +311,7 @@ public class RedStateMachineAuto extends OpMode {
         if (state != previousState) {
             switch (state) {
                 case 0:
+                    isCharging = false;
                     leftFront.setVelocity(0);
                     leftBack.setVelocity(0);
                     rightBack.setVelocity(0);
@@ -314,6 +319,7 @@ public class RedStateMachineAuto extends OpMode {
                     schedule(follow(follower, park()));
                     break;
                 case 1:
+                    isCharging = true;
                     schedule(follow(follower, circle()));
                     leftFront.setVelocity(0);
                     leftBack.setVelocity(0);
@@ -321,13 +327,15 @@ public class RedStateMachineAuto extends OpMode {
                     rightFront.setVelocity(0);
                     break;
                 case 2:
-
+                    isCharging = false;
                     leftFront.setVelocity(500);
                     leftBack.setVelocity(500);
                     rightBack.setVelocity(500);
                     rightFront.setVelocity(500);
                     break;
                 case 3:
+                    isCharging = false;
+
                     schedule(follow(follower, shoot1()));
                     leftFront.setVelocity(0);
                     leftBack.setVelocity(0);
@@ -335,6 +343,8 @@ public class RedStateMachineAuto extends OpMode {
                     rightFront.setVelocity(0);
                     break;
                 case 4:
+                    isCharging = false;
+
                     schedule(follow(follower, shoot2()));
                     leftFront.setVelocity(0);
                     leftBack.setVelocity(0);
@@ -342,6 +352,8 @@ public class RedStateMachineAuto extends OpMode {
                     rightFront.setVelocity(0);
                     break;
                 case 5:
+                    isCharging = false;
+
                     schedule(follow(follower, shoot3()));
                     leftFront.setVelocity(0);
                     leftBack.setVelocity(0);
@@ -352,7 +364,9 @@ public class RedStateMachineAuto extends OpMode {
             previousState = state;
         }
 
-        follower.update();
+        if(!isCharging){
+            follower.update();
+        }
         telemetry.addData("Current Pose", currentPose);
         telemetry.addData("Current State", state);
         Scheduler.execute();

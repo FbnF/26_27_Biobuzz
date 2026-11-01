@@ -25,4 +25,6 @@ public final class VisionConfig {
     public static boolean DRAW_AXES = true;
     public static boolean DRAW_OUTLINE = true;
     public static boolean DRAW_ID = true;
+
+    public static double KalmanGain = 0.15;
 }
