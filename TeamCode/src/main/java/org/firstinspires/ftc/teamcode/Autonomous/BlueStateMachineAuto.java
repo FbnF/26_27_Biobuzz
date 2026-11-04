@@ -56,6 +56,8 @@ public class BlueStateMachineAuto extends OpMode {
 
     private boolean isJustPickedUp = false;
 
+    private ElapsedTime lookAroundTimer = new ElapsedTime();
+    private static final double LOOK_AROUND_TIMEOUT_SEC = 3.0; // 3 second scan timer
 
     private ElapsedTime autoTimer = new ElapsedTime();
     private final PoseFactory p = PoseFactory.degrees();
@@ -285,25 +287,40 @@ public class BlueStateMachineAuto extends OpMode {
         boolean blueDetected = maxBlueContourArea > 100;
         boolean anyBallDetected = pollenDetected || redDetected || blueDetected;
 
-        // Example logic: Chase Pollen or Red, Avoid Blue
-        if (pollenDetected || blueDetected) {
-            state = 2; // Chase
+        // State Machine Transition Logic (Blue Alliance: Target Pollen or Blue, Avoid Red)
+        if (state == 6) {
+            // In Look-Around (3s Search Scan) state
+            if (pollenDetected || blueDetected) {
+                state = 2; // Chase / Charge
+                isJustPickedUp = true;
+            } else if (lookAroundTimer.seconds() >= LOOK_AROUND_TIMEOUT_SEC) {
+                if (isJustPickedUp) {
+                    state = 3; // Shoot1
+                    isJustPickedUp = false;
+                } else {
+                    state = 0; // Park
+                }
+            }
+        } else if (pollenDetected || blueDetected) {
+            state = 2; // Chase / Charge
             isJustPickedUp = true;
         } else if (redDetected) {
             state = 1; // Avoid
+        } else if (previousState == 2 && !anyBallDetected) {
+            // Exiting Chase state without ball -> Enter State 6 (Look-Around Search)
+            state = 6;
         } else if (!anyBallDetected && isJustPickedUp) {
             state = 3; // Shoot1
             isJustPickedUp = false;
         }
 
-
         telemetry.addData("Contours Found", numContoursFound);
         telemetry.addData("Pollen (Yellow) Area", "%.1f (Detected: %b)", maxPollenContourArea, pollenDetected);
         telemetry.addData("Red Area", "%.1f (Detected: %b)", maxRedContourArea, redDetected);
         telemetry.addData("Blue Area", "%.1f (Detected: %b)", maxBlueContourArea, blueDetected);
+        telemetry.addData("Look-Around Timer", "%.1f s / %.1f s", lookAroundTimer.seconds(), LOOK_AROUND_TIMEOUT_SEC);
 
-
-        if(autoTimer.seconds() < 5){
+        if (autoTimer.seconds() < 5) {
             state = 0;
         }
         // Only schedule the path once when entering a new state
@@ -316,6 +333,7 @@ public class BlueStateMachineAuto extends OpMode {
                     schedule(follow(follower, circle()));
                     break;
                 case 2:
+                    // Charge forward to pick up ball
                     leftFront.setVelocity(1000);
                     leftBack.setVelocity(1000);
                     rightBack.setVelocity(1000);
@@ -329,6 +347,14 @@ public class BlueStateMachineAuto extends OpMode {
                     break;
                 case 5:
                     schedule(follow(follower, shoot3()));
+                    break;
+                case 6:
+                    // Active 360 rotation scan to search for balls
+                    lookAroundTimer.reset();
+                    leftFront.setVelocity(-400);
+                    leftBack.setVelocity(-400);
+                    rightFront.setVelocity(400);
+                    rightBack.setVelocity(400);
                     break;
             }
             previousState = state;

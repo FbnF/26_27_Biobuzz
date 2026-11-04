@@ -30,6 +30,8 @@ import org.openftc.easyopencv.OpenCvPipeline;
 import org.openftc.easyopencv.OpenCvWebcam;
 import com.qualcomm.hardware.limelightvision.LLResult;
 
+import com.qualcomm.robotcore.util.ElapsedTime;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,7 +40,7 @@ public class TestStateMachineAuto extends OpMode {
     private Follower follower;
     private int state = 0;
     private int previousState = -1; // Prevents re-scheduling paths 50x a second
-    // State 0 is park, State 1 is avoid, State 2 is chase, State 3 is shooter position 1, State 4 is shooter position 2, State 5 is shooter position 3
+    // State 0: park, State 1: avoid, State 2: chase (telemetry test), State 3: shoot1, State 4: shoot2, State 5: shoot3, State 6: lookAround (3s search scan)
 
     private OpenCvWebcam openCvCam;
     private Limelight3A limeLight;
@@ -47,6 +49,8 @@ public class TestStateMachineAuto extends OpMode {
     //private DcMotorEx launchMotor;
 
     private boolean isJustPickedUp = false;
+    private ElapsedTime lookAroundTimer = new ElapsedTime();
+    private static final double LOOK_AROUND_TIMEOUT_SEC = 3.0; // 3 second scan timer
 
     private final PoseFactory p = PoseFactory.degrees();
     private final Pose startPose = p.of(24, 24, 0);
@@ -271,12 +275,29 @@ public class TestStateMachineAuto extends OpMode {
         boolean blueDetected = maxBlueContourArea > 100;
         boolean anyBallDetected = pollenDetected || redDetected || blueDetected;
 
-        // Example logic: Chase Pollen or Red, Avoid Blue
-        if (pollenDetected || redDetected) {
-            state = 2; // Chase
+        // State Machine Transition Logic
+        if (state == 6) {
+            // In Look-Around (3s Search Scan) state - Telemetry Test Mode
+            if (anyBallDetected) {
+                telemetry.addLine("[TEST] Ball Detected during Look-Around Scan -> Returning to Chase");
+                state = 2; // Chase / Charge
+                isJustPickedUp = true;
+            } else if (lookAroundTimer.seconds() >= LOOK_AROUND_TIMEOUT_SEC) {
+                if (isJustPickedUp) {
+                    state = 3; // Shoot1
+                    isJustPickedUp = false;
+                } else {
+                    state = 0; // Park
+                }
+            }
+        } else if (pollenDetected || redDetected) {
+            state = 2; // Chase / Charge
             isJustPickedUp = true;
         } else if (blueDetected) {
             state = 1; // Avoid
+        } else if (previousState == 2 && !anyBallDetected) {
+            // Exiting Chase state without ball -> Enter State 6 (Look-Around Search)
+            state = 6;
         } else if (!anyBallDetected && isJustPickedUp) {
             state = 3; // Shoot1
             isJustPickedUp = false;
@@ -286,6 +307,7 @@ public class TestStateMachineAuto extends OpMode {
         telemetry.addData("Pollen (Yellow) Area", "%.1f (Detected: %b)", maxPollenContourArea, pollenDetected);
         telemetry.addData("Red Area", "%.1f (Detected: %b)", maxRedContourArea, redDetected);
         telemetry.addData("Blue Area", "%.1f (Detected: %b)", maxBlueContourArea, blueDetected);
+        telemetry.addData("Look-Around Timer", "%.1f s / %.1f s", lookAroundTimer.seconds(), LOOK_AROUND_TIMEOUT_SEC);
 
         // Only schedule the path once when entering a new state
         if (state != previousState) {
@@ -300,7 +322,7 @@ public class TestStateMachineAuto extends OpMode {
                     break;
                 case 2:
                     // Add chase command here when ready
-                    telemetry.addLine("Chase");
+                    telemetry.addLine("Chase (Telemetry Test)");
                     break;
                 case 3:
                     schedule(follow(follower, shoot1()));
@@ -313,6 +335,10 @@ public class TestStateMachineAuto extends OpMode {
                 case 5:
                     schedule(follow(follower, shoot3()));
                     telemetry.addLine("shoot3");
+                    break;
+                case 6:
+                    lookAroundTimer.reset();
+                    telemetry.addLine("Look-Around (3s Search Scan)");
                     break;
             }
             previousState = state;

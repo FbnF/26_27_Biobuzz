@@ -54,8 +54,10 @@ public class RedStateMachineAuto extends OpMode {
     private DcMotorEx launchMotor;
 
     private boolean isJustPickedUp = false;
-
     private boolean isCharging = false;
+
+    private ElapsedTime lookAroundTimer = new ElapsedTime();
+    private static final double LOOK_AROUND_TIMEOUT_SEC = 3.0; // 3 second scan timer
 
     private double border = 50;
     private ElapsedTime autoTimer = new ElapsedTime();
@@ -285,28 +287,43 @@ public class RedStateMachineAuto extends OpMode {
         boolean blueDetected = maxBlueContourArea > 100;
         boolean anyBallDetected = pollenDetected || redDetected || blueDetected;
 
-        // Example logic: Chase Pollen or Red, Avoid Blue
-        if (pollenDetected || redDetected) {
-            state = 2; // Chase
+        // State Machine Transition Logic (Red Alliance: Target Pollen or Red, Avoid Blue)
+        if (state == 6) {
+            // In Look-Around (3s Search Scan) state
+            if (pollenDetected || redDetected) {
+                state = 2; // Chase / Charge
+                isJustPickedUp = true;
+            } else if (lookAroundTimer.seconds() >= LOOK_AROUND_TIMEOUT_SEC) {
+                if (isJustPickedUp) {
+                    state = 3; // Shoot1
+                    isJustPickedUp = false;
+                } else {
+                    state = 0; // Park
+                }
+            }
+        } else if (pollenDetected || redDetected) {
+            state = 2; // Chase / Charge
             isJustPickedUp = true;
         } else if (blueDetected) {
             state = 1; // Avoid
+        } else if (previousState == 2 && !anyBallDetected) {
+            // Exiting Chase state without ball -> Enter State 6 (Look-Around Search)
+            state = 6;
         } else if (!anyBallDetected && isJustPickedUp) {
             state = 3; // Shoot1
             isJustPickedUp = false;
-        } else{
-            state = 1;
         }
 
         telemetry.addData("Contours Found", numContoursFound);
         telemetry.addData("Pollen (Yellow) Area", "%.1f (Detected: %b)", maxPollenContourArea, pollenDetected);
         telemetry.addData("Red Area", "%.1f (Detected: %b)", maxRedContourArea, redDetected);
         telemetry.addData("Blue Area", "%.1f (Detected: %b)", maxBlueContourArea, blueDetected);
+        telemetry.addData("Look-Around Timer", "%.1f s / %.1f s", lookAroundTimer.seconds(), LOOK_AROUND_TIMEOUT_SEC);
 
-
-        if(autoTimer.seconds() < 2){
+        if (autoTimer.seconds() < 2) {
             state = 0;
         }
+
         // Only schedule the path once when entering a new state
         if (state != previousState) {
             switch (state) {
@@ -335,7 +352,6 @@ public class RedStateMachineAuto extends OpMode {
                     break;
                 case 3:
                     isCharging = false;
-
                     schedule(follow(follower, shoot1()));
                     leftFront.setVelocity(0);
                     leftBack.setVelocity(0);
@@ -344,7 +360,6 @@ public class RedStateMachineAuto extends OpMode {
                     break;
                 case 4:
                     isCharging = false;
-
                     schedule(follow(follower, shoot2()));
                     leftFront.setVelocity(0);
                     leftBack.setVelocity(0);
@@ -353,12 +368,20 @@ public class RedStateMachineAuto extends OpMode {
                     break;
                 case 5:
                     isCharging = false;
-
                     schedule(follow(follower, shoot3()));
                     leftFront.setVelocity(0);
                     leftBack.setVelocity(0);
                     rightBack.setVelocity(0);
                     rightFront.setVelocity(0);
+                    break;
+                case 6:
+                    // Active 360 rotation scan to search for balls
+                    isCharging = true;
+                    lookAroundTimer.reset();
+                    leftFront.setVelocity(-400);
+                    leftBack.setVelocity(-400);
+                    rightBack.setVelocity(400);
+                    rightFront.setVelocity(400);
                     break;
             }
             previousState = state;
