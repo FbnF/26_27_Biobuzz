@@ -9,7 +9,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-// Optimized CSV Data Logger helper for USB-accessible file storage
+// Optimized CSV Data Logger helper for USB-accessible flywheel test storage
 public class FlywheelTestLogger {
 
     private BufferedWriter writer;
@@ -17,6 +17,7 @@ public class FlywheelTestLogger {
     private final String modeName;
     private String logFilePath = "";
     private String relativePath = "";
+    private String fileName = "";
     private final StringBuilder sb = new StringBuilder(128);
     private int rowCount = 0;
 
@@ -31,14 +32,14 @@ public class FlywheelTestLogger {
             }
 
             String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
-            String fileName = "Flywheel_" + modeName + "_" + timeStamp + ".csv";
+            fileName = "FLYWHEEL_TEST_" + modeName + "_" + timeStamp + ".csv";
             File logFile = new File(dataDir, fileName);
 
             logFilePath = logFile.getAbsolutePath();
             relativePath = "FIRST/data/" + fileName;
 
             writer = new BufferedWriter(new FileWriter(logFile));
-            writer.write("time_ms,mode,target_tps,actual_tps,error_tps,motor_output,time_to_target_s,is_settled\n");
+            writer.write("time_ms,test_type,target_tps,actual_tps,error_tps,motor_power,time_to_target_s,is_settled\n");
             writer.flush();
         } catch (Exception ignored) {
             writer = null;
@@ -77,6 +78,10 @@ public class FlywheelTestLogger {
 
     public String getRelativePath() {
         return relativePath;
+    }
+
+    public String getFileName() {
+        return fileName;
     }
 
     public void close() {

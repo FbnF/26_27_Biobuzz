@@ -76,14 +76,14 @@ public class BangBangTest extends LinearOpMode {
         }
 
         if (launchMotor != null) {
-            launchMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            launchMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
             launchMotor.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
             launchMotor.setPower(0);
         }
 
         if (intakeMotor != null) {
-            intakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            intakeMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+            intakeMotor.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
             intakeMotor.setPower(0);
         }
 
@@ -101,7 +101,7 @@ public class BangBangTest extends LinearOpMode {
         waitForStart();
 
         if (ENABLE_CSV_LOGGING) {
-            logger = new FlywheelTestLogger("BANGBANGONLY");
+            logger = new FlywheelTestLogger("BANGBANG");
         }
 
         try {
@@ -227,7 +227,8 @@ public class BangBangTest extends LinearOpMode {
                 dashTelemetry.addData("Time Elapsed", "%.2f s", elapsedSec);
                 dashTelemetry.addData("Time To Target", timeToTargetSec >= 0 ? "%.2f s" : "NOT_REACHED", timeToTargetSec);
                 dashTelemetry.addData("Settled Status", isSettled ? "SETTLED (READY)" : "SPOOLING");
-                dashTelemetry.addData("USB Log File", logger != null ? logger.getRelativePath() : "DISABLED");
+                dashTelemetry.addData("CSV FILE NAME", logger != null ? logger.getFileName() : "DISABLED");
+                dashTelemetry.addData("CSV USB PATH", logger != null ? logger.getRelativePath() : "DISABLED");
                 dashTelemetry.update();
             }
         } finally {
