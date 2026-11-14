@@ -13,6 +13,7 @@ public final class TurretConfig {
     //Bang-bang turret controller tuning.
     //TICKS_PER_RADIAN must be measured on the robot from the turret encoder + gearing.
     public static double TICKS_PER_RADIAN = 500.0;
+    public static double TICKS_PER_STEP = 67;
     public static double BANG_BANG_POWER = 1;
     public static double BANG_BANG_DEADBAND = 20.0;
     public static double BANG_BANG_HYSTERESIS = 30.0;
