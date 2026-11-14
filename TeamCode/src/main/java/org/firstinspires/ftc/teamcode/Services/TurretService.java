@@ -1,9 +1,17 @@
 package org.firstinspires.ftc.teamcode.Services;
 
+import static org.firstinspires.ftc.teamcode.Config.TurretConfig.TICKS_PER_STEP;
+
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.teamcode.Config.TurretConfig;
+
+import org.opencv.core.Mat;
+
+import java.util.concurrent.CopyOnWriteArraySet;
 
 // Status light logic
 public class TurretService {
@@ -14,151 +22,170 @@ public class TurretService {
     private static TurretService instance = null;
 
     private DcMotorEx turretMotor;
+    private DcMotorEx turretServoMotor;
     private int targetTicks = 0;
     private int lastDirection = 0;
     private boolean turretInitialized = false;
 
-    public static TurretService getInstance() {
-        if (instance == null) {
-            instance = new TurretService();
-        }
-        return instance;
-    }
+    private DcMotorEx encoderMotor = turretMotor;
 
-    public void initTurret(DcMotorEx motor) {
+    private double gearRatio = (16/38);
+
+    private double absPosition = 0;
+
+    private double targetRotationTicks;
+
+    private double absTargetPose;
+
+    private double oppositeRadians;
+
+    private double turnFactor;
+
+
+
+
+    public void initTurret(DcMotorEx motor, DcMotorEx ServoMotor){
         turretMotor = motor;
         turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         turretMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         turretMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        turretServoMotor = ServoMotor;
+        turretServoMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
         targetTicks = 0;
         lastDirection = 0;
         turretInitialized = true;
     }
 
-    public void setTargetAngle(double radians) {
-        setTargetTicks((int) Math.round(radians * TurretConfig.TICKS_PER_RADIAN));
+    public double getNewPosition(double positionChange){
+       absPosition = absPosition - positionChange;
+       return absPosition;
     }
 
-    public void setTargetTicks(int ticks) {
-        int minTicks = (int) Math.round(TurretConfig.min * TurretConfig.TICKS_PER_RADIAN);
-        int maxTicks = (int) Math.round(TurretConfig.max * TurretConfig.TICKS_PER_RADIAN);
-        if (ticks < minTicks) {
+    public void setTargetAngle(double radians){
+     //   setTargetTicks((int)Math.round(radians * TurretConfig.TICKS_PER_RADIAN));
+        targetRotationTicks = radians * TurretConfig.TICKS_PER_RADIAN;
+        oppositeRadians = radians + Math.toRadians(180);
+        absTargetPose = absPosition+targetRotationTicks;
+
+        if(absPosition == absTargetPose){
+            return;
+        }
+        if(targetRotationTicks >= oppositeRadians){
+            turnFactor = -1;
+        } else{
+            turnFactor = 1;
+        }
+
+
+        turretServoMotor.setVelocity(TICKS_PER_STEP * turnFactor);
+
+
+    }
+
+    public void setTargetTicks(int ticks){
+        int minTicks = (int)Math.round(TurretConfig.min * TurretConfig.TICKS_PER_RADIAN);
+        int maxTicks = (int)Math.round(TurretConfig.max * TurretConfig.TICKS_PER_RADIAN);
+        if(ticks < minTicks){
             targetTicks = minTicks;
-        } else if (ticks > maxTicks) {
+        } else if(ticks > maxTicks){
             targetTicks = maxTicks;
         } else {
             targetTicks = ticks;
         }
     }
 
-    public boolean atTarget() {
-        if (turretMotor == null) {
+    public boolean atTarget(){
+        if(turretMotor == null){
             return false;
         }
         return Math.abs(targetTicks - turretMotor.getCurrentPosition()) <= TurretConfig.BANG_BANG_DEADBAND;
     }
 
-    public void updateTurret() {
-        if (turretMotor == null) {
+    public void updateTurret(){
+        if(turretMotor == null){
             return;
         }
-
         int error = targetTicks - turretMotor.getCurrentPosition();
         double absError = Math.abs(error);
 
-        double stopThreshold = TurretConfig.BANG_BANG_DEADBAND;
-        double startThreshold = TurretConfig.BANG_BANG_DEADBAND + TurretConfig.BANG_BANG_HYSTERESIS;
+        if(absError <= TurretConfig.BANG_BANG_DEADBAND){
+            turretMotor.setPower(0);
+            lastDirection = 0;
+            return;
+        }
 
-        if (lastDirection == 0) {
-            if (absError > startThreshold) {
-                lastDirection = error > 0 ? 1 : -1;
-                turretMotor.setPower(lastDirection * TurretConfig.BANG_BANG_POWER);
-            } else {
-                turretMotor.setPower(0);
-            }
+        int desiredDirection = error > 0 ? 1 : -1;
+        if(desiredDirection != lastDirection && absError < TurretConfig.BANG_BANG_DEADBAND + TurretConfig.BANG_BANG_HYSTERESIS){
+            turretMotor.setPower(0);
         } else {
-            int desiredDirection = error > 0 ? 1 : -1;
-            if (desiredDirection != lastDirection) {
-                if (absError <= stopThreshold) {
-                    lastDirection = 0;
-                    turretMotor.setPower(0);
-                } else if (absError > startThreshold) {
-                    lastDirection = desiredDirection;
-                    turretMotor.setPower(lastDirection * TurretConfig.BANG_BANG_POWER);
-                } else {
-                    lastDirection = 0;
-                    turretMotor.setPower(0);
-                }
-            } else {
-                if (absError <= stopThreshold) {
-                    lastDirection = 0;
-                    turretMotor.setPower(0);
-                } else {
-                    turretMotor.setPower(lastDirection * TurretConfig.BANG_BANG_POWER);
-                }
-            }
+            lastDirection = desiredDirection;
+            turretMotor.setPower(desiredDirection * TurretConfig.BANG_BANG_POWER);
         }
     }
 
-    public void stopTurret() {
-        if (turretMotor != null) {
+    public void stopTurret(){
+        if(turretMotor != null){
             turretMotor.setPower(0);
         }
         lastDirection = 0;
     }
 
-    public int getTargetTicks() {
+    public int getTargetTicks(){
         return targetTicks;
     }
 
-    public int getCurrentTicks() {
+    public int getCurrentTicks(){
         return turretMotor != null ? turretMotor.getCurrentPosition() : 0;
     }
 
-    public boolean isTurretInitialized() {
+    public boolean isTurretInitialized(){
         return turretInitialized;
     }
 
-    public double GetRotationAngle(double targetX, double targetY) {
+
+    public double GetRotationAngle(double targetX, double targetY){
         double itargetX = -targetX;
-        if (itargetX == 0.0 && targetY == 0.0) {
+        if(itargetX == 0.0 && targetY == 0.0){
             return TurretConfig.min;
         }
         double angleOfHive = Math.atan2(itargetX, targetY);
-        if (angleOfHive < TurretConfig.min) {
+        if(angleOfHive < TurretConfig.min){
             return TurretConfig.min;
         }
-        if (angleOfHive > TurretConfig.max) {
+        if(angleOfHive > TurretConfig.max){
             return TurretConfig.max;
         }
         return angleOfHive;
     }
 
-    public void FireBasedOnAprilTag(DcMotorEx launchMotor, Servo spindexServo, Servo turrentChange, double velocity, int[] ElementType, int ElementId, double turnAngle) {
+    public void FireBasedOnAprilTag(DcMotorEx launchMotor, Servo spindexServo,Servo turrentChange, double velocity, int[] ElementType,int ElementId, double turnAngle){
         //For the ElementType 0:Empty ,1: Pollen, 2: Blue Nectar, 3: Red Nectar
-        if (ElementType == null || ElementId < 0 || ElementId >= ElementType.length) {
+        if(ElementType == null || ElementId < 0 || ElementId >= ElementType.length){
             return;
         }
 
         int target = -1;
-        for (int i = ElementId; i < ElementType.length; i++) {
-            if (ElementType[i] != 0) {
+        for(int i = ElementId; i < ElementType.length; i++){
+            if(ElementType[i] != 0){
                 target = i;
                 break;
             }
         }
-        if (target == -1) {
+        if(target == -1){
             return;
         }
 
         int elementType = ElementType[target];
-        if (elementType == 2 || elementType == 3) {
+        if(elementType == 2 || elementType == 3){
             turrentChange.setPosition(1.0);//Change this later
-        } else if (elementType == 1) {
+        } else if(elementType == 1){
             turrentChange.setPosition(0);
         }
         //The velocity will be calculated on the fly once we tune it.
         launchMotor.setVelocity(velocity);
         spindexServo.setPosition(turnAngle);
     }
+
+
 }
