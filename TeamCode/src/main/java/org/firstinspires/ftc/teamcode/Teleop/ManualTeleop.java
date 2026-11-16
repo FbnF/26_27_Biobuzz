@@ -24,10 +24,10 @@ public class ManualTeleop extends LinearOpMode {
     private boolean shooting = false;
     private double gatePos = 0.5;
     private double intakeTPS = 0;
-    private double shooterTPS = 720;
+    private double shooterTPS = 1200;
     private double curTransferTps;
     private double turretPower;
-    private double baseTransferTps = 575;
+    private double baseTransferTps = 1150;
 
 
     private boolean lastRightTrigger2 = false;
@@ -54,9 +54,11 @@ public class ManualTeleop extends LinearOpMode {
         contServo = hardwareMap.get(CRServo.class, "contServo");
 
         // Set reverse directions if necessary
+        contServo.setDirection(CRServo.Direction.REVERSE);
 
         curTransferTps = baseTransferTps;
         contServo.setPower(0);
+        gatePos=0.18;
 
 
         waitForStart();
@@ -106,7 +108,7 @@ public class ManualTeleop extends LinearOpMode {
             intakeTPS = 1150;
         }
         if (leftTriggerPressed && !shooting) {
-            transferMotor.setVelocity(225);
+            transferMotor.setVelocity(1150);
             intakeTPS = 0;
         }
         if (leftBumperPressed && !shooting) {
@@ -135,14 +137,14 @@ public class ManualTeleop extends LinearOpMode {
             shooting = true;
             transferMotor.setVelocity(1150);
             intakeTPS = 1150;
-            gatePos = 0.5;
+            gatePos = 0.35;
             contServo.setPower(1.0);
         }
         if (xPressed) {
             shooting = false;
             transferMotor.setVelocity(curTransferTps);
             intakeTPS = 1150;
-            gatePos = 0.0;
+            gatePos = 0.18;
             contServo.setPower(0);
         }
         turretPower = gamepad2.right_stick_x;
@@ -158,7 +160,7 @@ public class ManualTeleop extends LinearOpMode {
         telemetry.addData("Target ShooterTPS: ", shooterTPS);
         telemetry.addData("Current ShooterTPS: ", launchMotor.getVelocity());
         telemetry.addData("Is Shooting: ", shooting);
-        telemetry.addData("Gate Open ", gatePos == 0.0);
+        telemetry.addData("Gate Open: ", gatePos == 0.0);
         telemetry.update();
     }
 }
