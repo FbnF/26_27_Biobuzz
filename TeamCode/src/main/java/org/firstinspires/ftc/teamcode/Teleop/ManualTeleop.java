@@ -105,7 +105,7 @@ public class ManualTeleop extends LinearOpMode {
 
         if (rightTriggerPressed && !shooting) {
             transferMotor.setVelocity(curTransferTps);
-            intakeTPS = 1150;
+            intakeTPS = 3000;
         }
         if (leftTriggerPressed && !shooting) {
             transferMotor.setVelocity(1150);
@@ -113,7 +113,7 @@ public class ManualTeleop extends LinearOpMode {
         }
         if (leftBumperPressed && !shooting) {
             transferMotor.setVelocity(-curTransferTps);
-            intakeTPS = -1150;
+            intakeTPS = -3000;
         }
     }
 
@@ -136,14 +136,14 @@ public class ManualTeleop extends LinearOpMode {
         if (yPressed) {
             shooting = true;
             transferMotor.setVelocity(1150);
-            intakeTPS = 1150;
+            intakeTPS = 3000;
             gatePos = 0.35;
             contServo.setPower(1.0);
         }
         if (xPressed) {
             shooting = false;
             transferMotor.setVelocity(curTransferTps);
-            intakeTPS = 1150;
+            intakeTPS = 3000;
             gatePos = 0.18;
             contServo.setPower(0);
         }

@@ -61,7 +61,7 @@ public class BangBangManualTeleop extends LinearOpMode {
 
         curTransferTps = baseTransferTps;
         contServo.setPower(0);
-        gatePos = 0.18;
+        gatePos = 0.11;
 
         if (launchMotor != null) {
             launchMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
@@ -111,16 +111,16 @@ public class BangBangManualTeleop extends LinearOpMode {
         boolean leftBumperPressed = gamepad2.left_bumper && !lastLeftBumper2;
 
         if (rightTriggerPressed && !shooting) {
-            transferMotor.setVelocity(curTransferTps);
-            intakeTPS = 1150;
+            transferMotor.setPower(1.0);
+            intakeTPS = 0.9;
         }
         if (leftTriggerPressed && !shooting) {
-            transferMotor.setVelocity(1150);
-            intakeTPS = 0;
+            transferMotor.setPower(0.8);
+            intakeTPS = 0.0;
         }
         if (leftBumperPressed && !shooting) {
-            transferMotor.setVelocity(-curTransferTps);
-            intakeTPS = -1150;
+            transferMotor.setPower(-1.0);
+            intakeTPS = -0.9;
         }
     }
 
@@ -132,8 +132,8 @@ public class BangBangManualTeleop extends LinearOpMode {
 
         if (dpadRightPressed && !shooting) curTransferTps += 15;
         if (dpadLeftPressed && !shooting) curTransferTps -= 15;
-        if (dpadUpPressed) shooterTPS += 15;
-        if (dpadDownPressed) shooterTPS -= 15;
+        if (dpadUpPressed) shooterTPS += 50;
+        if (dpadDownPressed) shooterTPS -= 50;
     }
 
     private void shooterLogic() {
@@ -142,16 +142,16 @@ public class BangBangManualTeleop extends LinearOpMode {
 
         if (yPressed) {
             shooting = true;
-            transferMotor.setVelocity(1150);
-            intakeTPS = 1150;
+            transferMotor.setPower(1.0);
+            intakeTPS = 0.9;
             gatePos = 0.35;
             contServo.setPower(1.0);
         }
         if (xPressed) {
             shooting = false;
-            transferMotor.setVelocity(curTransferTps);
-            intakeTPS = 1150;
-            gatePos = 0.18;
+            transferMotor.setPower(1.0);
+            intakeTPS = 0.9;
+            gatePos = 0.11;
             contServo.setPower(0);
         }
         turretPower = gamepad2.right_stick_x;
@@ -159,7 +159,7 @@ public class BangBangManualTeleop extends LinearOpMode {
 
     private void settingPowers() {
         gateServo.setPosition(gatePos);
-        intakeMotor.setVelocity(intakeTPS);
+        intakeMotor.setPower(intakeTPS);
         turretMotor.setPower(turretPower);
 
         if (launchMotor != null) {
