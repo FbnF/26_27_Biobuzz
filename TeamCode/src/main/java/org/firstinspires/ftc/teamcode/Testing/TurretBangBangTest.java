@@ -17,6 +17,8 @@ public class TurretBangBangTest extends LinearOpMode {
     private TurretService turretService;
     private DcMotorEx turretMotor;
 
+    private DcMotorEx turretServoMotor;
+
     private double targetAngle = 0.0;
     private double step = ANGLE_STEP;
 
@@ -41,7 +43,7 @@ public class TurretBangBangTest extends LinearOpMode {
 
         if (isStopRequested() || turretMotor == null) return;
 
-        turretService.initTurret(turretMotor);
+        turretService.initTurret(turretMotor, turretServoMotor);
 
         try {
             while (opModeIsActive()) {

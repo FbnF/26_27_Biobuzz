@@ -58,5 +58,13 @@ public class Localization {
         double Ph = MegaTag2.getOrientation().getYaw() + 90;
         return PoseFactory.degrees().of(Px, Py, Ph);
     }
+
+    public double horizontal(double Vx, double Vy, double theta){
+        return  (Vx * Math.cos(theta)) - (Vy * Math.sin(theta));
+    }
+    public double vertical(double Vx, double Vy, double theta){
+        return (Vx * Math.sin(theta)) - (Vy * Math.cos(theta));
+    }
+
 }
 

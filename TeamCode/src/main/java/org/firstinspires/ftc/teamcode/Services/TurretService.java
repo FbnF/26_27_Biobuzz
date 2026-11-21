@@ -59,12 +59,12 @@ public class TurretService {
     }
 
     public double getNewPosition(double positionChange){
-       absPosition = absPosition - positionChange;
-       return absPosition;
+        absPosition = absPosition - positionChange;
+        return absPosition;
     }
 
     public void setTargetAngle(double radians){
-     //   setTargetTicks((int)Math.round(radians * TurretConfig.TICKS_PER_RADIAN));
+        //   setTargetTicks((int)Math.round(radians * TurretConfig.TICKS_PER_RADIAN));
         targetRotationTicks = radians * TurretConfig.TICKS_PER_RADIAN;
         oppositeRadians = radians + Math.toRadians(180);
         absTargetPose = absPosition+targetRotationTicks;
@@ -159,34 +159,16 @@ public class TurretService {
         }
         return angleOfHive;
     }
-
-    public void FireBasedOnAprilTag(DcMotorEx launchMotor, Servo spindexServo,Servo turrentChange, double velocity, int[] ElementType,int ElementId, double turnAngle){
-        //For the ElementType 0:Empty ,1: Pollen, 2: Blue Nectar, 3: Red Nectar
-        if(ElementType == null || ElementId < 0 || ElementId >= ElementType.length){
-            return;
-        }
-
-        int target = -1;
-        for(int i = ElementId; i < ElementType.length; i++){
-            if(ElementType[i] != 0){
-                target = i;
-                break;
-            }
-        }
+/*
+    public void FireBasedOnAprilTag(DcMotorEx launchMotor, DcMotorEx turrentChange, double velocity, double turnAngle, DcMotorEx transferMotor){
         if(target == -1){
             return;
         }
 
-        int elementType = ElementType[target];
-        if(elementType == 2 || elementType == 3){
-            turrentChange.setPosition(1.0);//Change this later
-        } else if(elementType == 1){
-            turrentChange.setPosition(0);
-        }
         //The velocity will be calculated on the fly once we tune it.
         launchMotor.setVelocity(velocity);
-        spindexServo.setPosition(turnAngle);
-    }
+     //   spindexServo.setPosition(turnAngle);
+    }*/
 
 
 }
