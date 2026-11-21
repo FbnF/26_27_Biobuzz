@@ -151,12 +151,15 @@ public class TurretService {
     }
 
 
-    public double GetRotationAngle(double targetX, double targetY){
-        double itargetX = -targetX;
-        if(itargetX == 0.0 && targetY == 0.0){
+    public double GetRotationAngle(double robotX, double robotY){
+        double targetX = 72.0;
+        double targetY = 72.0;
+        double itargetX = targetX-robotX;
+        double itargetY = targetY-robotY;
+        if(itargetX == 0.0 && itargetY == 0.0){
             return TurretConfig.min;
         }
-        double angleOfHive = Math.atan2(itargetX, targetY);
+        double angleOfHive = Math.atan2(itargetX, itargetY);
         if(angleOfHive < TurretConfig.min){
             return TurretConfig.min;
         }
