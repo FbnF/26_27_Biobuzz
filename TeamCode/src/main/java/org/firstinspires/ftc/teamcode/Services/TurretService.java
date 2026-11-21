@@ -47,15 +47,23 @@ public class TurretService {
 
     public void initTurret(DcMotorEx motor, DcMotorEx ServoMotor){
         turretMotor = motor;
-        turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        turretMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        turretMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        if (turretMotor != null) {
+            turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            turretMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            turretMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        }
         turretServoMotor = ServoMotor;
-        turretServoMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        if (turretServoMotor != null) {
+            turretServoMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        }
 
         targetTicks = 0;
         lastDirection = 0;
         turretInitialized = true;
+    }
+
+    public void initTurret(DcMotorEx motor) {
+        initTurret(motor, null);
     }
 
     public double getNewPosition(double positionChange){
