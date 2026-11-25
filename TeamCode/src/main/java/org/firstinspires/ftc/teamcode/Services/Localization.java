@@ -52,7 +52,7 @@ public class Localization {
         return finalPose;
     }
 
-    private static Pose MT2ToPedro(@org.jetbrains.annotations.UnknownNullability Pose3D MegaTag2){
+    public static Pose MT2ToPedro(@org.jetbrains.annotations.UnknownNullability Pose3D MegaTag2){
         double Px = MegaTag2.getPosition().y + 72;
         double Py = 72 - MegaTag2.getPosition().x;
         double Ph = MegaTag2.getOrientation().getYaw() + 90;

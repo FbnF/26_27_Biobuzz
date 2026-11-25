@@ -17,5 +17,5 @@ public final class TurretConfig {
     public static double BANG_BANG_POWER = 1;
     public static double BANG_BANG_DEADBAND = 20.0;
     public static double BANG_BANG_HYSTERESIS = 30.0;
-    public static double gearRatio = 10.0 / 38.0;
+    public static double gearRatio = 14 / 55;
 }

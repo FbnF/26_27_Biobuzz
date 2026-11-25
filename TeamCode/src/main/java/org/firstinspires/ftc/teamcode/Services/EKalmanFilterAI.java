@@ -18,6 +18,21 @@ public class EKalmanFilterAI {
     // Measurement Noise Covariance Matrix R (3x3) - uncertainty in the AprilTag sensor measurements
     private double[][] R = new double[3][3];
 
+    // Initial Error Covariance P variances
+    public static double InitXVar = 0.5;
+    public static double InitYVar = 0.5;
+    public static double InitThetaVar = 0.01;
+
+    // Process Noise Covariance Q variances
+    public static double ProcessXVar = 0.005;
+    public static double ProcessYVar = 0.005;
+    public static double ProcessThetaVar = 0.0005;
+
+    // Measurement Noise Covariance R variances
+    public static double MeasureXVar = 0.1;
+    public static double MeasureYVar = 0.1;
+    public static double MeasureThetaVar = 0.01;
+
     /**
      * Constructor to initialize the EKF with initial pose, distance sensor readings, and manual yaw.
      *
@@ -31,20 +46,20 @@ public class EKalmanFilterAI {
         state[2] = initialTheta;
 
         // Initialize Error Covariance P with initial starting uncertainties
-        P[0][0] = 0.5;  // Initial X variance (inches^2) - tighter if distance sensors are precise
-        P[1][1] = 0.5;  // Initial Y variance (inches^2)
-        P[2][2] = 0.01; // Initial Theta variance (radians^2) - tight if manually aligned well
+        P[0][0] = InitXVar;     // Initial X variance (inches^2) - tighter if distance sensors are precise
+        P[1][1] = InitYVar;     // Initial Y variance (inches^2)
+        P[2][2] = InitThetaVar; // Initial Theta variance (radians^2) - tight if manually aligned well
 
         // --- TUNING GUIDELINE FOR Q (Process Noise Matrix) ---
-        // Q represents the cumulative error/drift introduced by wheel slip, uncalibrated encoder ticks,
+        // Q represents the cumulat ive error/drift introduced by wheel slip, uncalibrated encoder ticks,
         // and BHI260AP IMU gyro drift over a 20ms time window.
         // HOW TO TUNE:
         // 1. Drive the robot straight for 10 feet using only Pinpoint odometry, compare with a tape measure.
         // 2. Adjust Q[0][0] and Q[1][1] until the filter's estimated uncertainty matches your observed physical drift.
         // 3. Spin the robot 360 degrees multiple times to measure heading drift from the BHI260AP gyro, and set Q[2][2].
-        Q[0][0] = 0.005; // Process noise variance for X per 20ms step
-        Q[1][1] = 0.005; // Process noise variance for Y per 20ms step
-        Q[2][2] = 0.0005;// Process noise variance for Heading (theta) per 20ms step
+        Q[0][0] = ProcessXVar;     // Process noise variance for X per 20ms step
+        Q[1][1] = ProcessYVar;     // Process noise variance for Y per 20ms step
+        Q[2][2] = ProcessThetaVar; // Process noise variance for Heading (theta) per 20ms step
 
         // --- TUNING GUIDELINE FOR R (Measurement Noise Matrix) ---
         // R represents how much noise or jitter is present in your AprilTag pose estimations.
@@ -53,9 +68,9 @@ public class EKalmanFilterAI {
         // 2. Log 100 consecutive AprilTag X, Y, and Theta readings via telemetry.
         // 3. Compute the variance (standard deviation squared) of those logged values and assign them here.
         //    (Note: If tags are far away, dynamically scale R up because distant tags are noisier).
-        R[0][0] = 0.1;  // AprilTag X measurement variance (inches^2)
-        R[1][1] = 0.1;  // AprilTag Y measurement variance (inches^2)
-        R[2][2] = 0.01; // AprilTag Heading measurement variance (radians^2)
+        R[0][0] = MeasureXVar;     // AprilTag X measurement variance (inches^2)
+        R[1][1] = MeasureYVar;     // AprilTag Y measurement variance (inches^2)
+        R[2][2] = MeasureThetaVar; // AprilTag Heading measurement variance (radians^2)
     }
 
     /**
