@@ -22,18 +22,18 @@ public class BangBangManualTeleop extends LinearOpMode {
     private CRServo contServo;
 
     // Bang-Bang Control Parameters
-    public static double HIGH_POWER = 1.0;
-    public static double LOW_POWER = 0.0;
+    public static double HIGH_POWER = 1;
+    public static double LOW_POWER = 0.6;
     public static double HYSTERESIS_TPS = 15.0;
-    public static double TPS_TOL = 50.0;
+    public static double TPS_TOL = 25;
 
     private boolean shooting = false;
     private double gatePos = 0.5;
     private double intakeTPS = 0;
-    private double shooterTPS = 1200;
+    private double shooterTPS = 1500;
     private double curTransferTps;
     private double turretPower;
-    private double baseTransferTps = 1150;
+    private double baseTransferTps = 700;
 
     private boolean lastRightTrigger2 = false;
     private boolean lastLeftTrigger2 = false;
@@ -111,15 +111,15 @@ public class BangBangManualTeleop extends LinearOpMode {
         boolean leftBumperPressed = gamepad2.left_bumper && !lastLeftBumper2;
 
         if (rightTriggerPressed && !shooting) {
-            transferMotor.setPower(1.0);
+            transferMotor.setPower(0.7);
             intakeTPS = 0.9;
         }
         if (leftTriggerPressed && !shooting) {
-            transferMotor.setPower(0.8);
+            transferMotor.setPower(0.7);
             intakeTPS = 0.0;
         }
         if (leftBumperPressed && !shooting) {
-            transferMotor.setPower(-1.0);
+            transferMotor.setPower(-0.7);
             intakeTPS = -0.9;
         }
     }
@@ -132,8 +132,8 @@ public class BangBangManualTeleop extends LinearOpMode {
 
         if (dpadRightPressed && !shooting) curTransferTps += 15;
         if (dpadLeftPressed && !shooting) curTransferTps -= 15;
-        if (dpadUpPressed) shooterTPS += 50;
-        if (dpadDownPressed) shooterTPS -= 50;
+        if (dpadUpPressed) shooterTPS += 10;
+        if (dpadDownPressed) shooterTPS -= 10;
     }
 
     private void shooterLogic() {
@@ -142,14 +142,14 @@ public class BangBangManualTeleop extends LinearOpMode {
 
         if (yPressed) {
             shooting = true;
-            transferMotor.setPower(1.0);
+            transferMotor.setPower(0.75);
             intakeTPS = 0.9;
             gatePos = 0.35;
             contServo.setPower(1.0);
         }
         if (xPressed) {
             shooting = false;
-            transferMotor.setPower(1.0);
+            transferMotor.setPower(1);
             intakeTPS = 0.9;
             gatePos = 0.11;
             contServo.setPower(0);

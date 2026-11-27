@@ -27,7 +27,7 @@ public class ManualTeleop extends LinearOpMode {
     private double shooterTPS = 1200;
     private double curTransferTps;
     private double turretPower;
-    private double baseTransferTps = 1150;
+    private double baseTransferTps = 700;
 
 
     private boolean lastRightTrigger2 = false;
